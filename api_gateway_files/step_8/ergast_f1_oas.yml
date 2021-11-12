@@ -1,0 +1,403 @@
+---
+info:
+  license:
+    name: MIT
+  title: F1 Results API
+  version: "1"
+openapi: 3.0.0
+components:
+  schemas:
+    Circuit:
+      properties:
+        Location:
+          properties:
+            country:
+              example: Australia
+              type: string
+            lat:
+              example: "-37.8497"
+              type: string
+            locality:
+              example: Melbourne
+              type: string
+            long:
+              example: "144.968"
+              type: string
+          type: object
+        circuitId:
+          example: albert_park
+          type: string
+        circuitName:
+          example: Albert Park Grand Prix Circuit
+          type: string
+        url:
+          example: http://en.wikipedia.org/wiki/Melbourne_Grand_Prix_Circuit
+          type: string
+      type: object
+    Driver:
+      properties:
+        code:
+          example: HAM
+          type: string
+        driverId:
+          example: hamilton
+          type: string
+        familyName:
+          example: Hamilton
+          type: string
+        givenName:
+          example: Lewis
+          type: string
+        permanentNumber:
+          example: "44"
+          type: string
+        url:
+          example: http://en.wikipedia.org/wiki/Lewis_Hamilton
+          type: string
+      required:
+        - driverId
+        - url
+      type: object
+    Drivers:
+      items:
+        $ref: '#/components/schemas/Driver'
+      type: array
+    Error:
+      properties:
+        code:
+          format: int32
+          type: integer
+        message:
+          type: string
+      required:
+        - code
+        - message
+      type: object
+    MRData:
+      properties:
+        limit:
+          example: "30"
+          type: string
+        offset:
+          example: "0"
+          type: string
+        series:
+          example: f1
+          type: string
+        total:
+          example: "1"
+          type: string
+        xmlns:
+          example: http://ergast.com/mrd/1.0
+          type: string
+      type: object
+    Race:
+      properties:
+        Circuit:
+          $ref: '#/components/schemas/Circuit'
+          type: object
+        date:
+          example: "2008-03-16"
+          type: string
+        raceName:
+          example: Australian Grand Prix
+          type: string
+        round:
+          example: "1"
+          type: string
+        season:
+          example: "2008"
+          type: string
+        time:
+          example: 04:30:00Z
+          type: string
+        url:
+          example: http://en.wikipedia.org/wiki/2008_Australian_Grand_Prix
+          type: string
+      type: object
+    ResultDriver:
+      properties:
+        MRData:
+          allOf:
+            - $ref: '#/components/schemas/MRData'
+            - properties:
+                DriverTable:
+                  properties:
+                    Drivers:
+                      items:
+                        $ref: '#/components/schemas/Driver'
+                      type: array
+                    driverId:
+                      example: hamilton
+                      type: string
+              type: object
+      type: object
+    ResultDriverList:
+      properties:
+        MRData:
+          allOf:
+            - $ref: '#/components/schemas/MRData'
+            - properties:
+                DriverTable:
+                  properties:
+                    Drivers:
+                      items:
+                        $ref: '#/components/schemas/Driver'
+                      type: array
+              type: object
+      type: object
+    ResultDriverSeasonList:
+      properties:
+        MRData:
+          allOf:
+            - $ref: '#/components/schemas/MRData'
+            - properties:
+                SeasonTable:
+                  properties:
+                    Seasons:
+                      items:
+                        $ref: '#/components/schemas/Seasons'
+                      type: array
+                    driverId:
+                      example: hamilton
+                      type: string
+              type: object
+      type: object
+    ResultRace:
+      properties:
+        MRData:
+          allOf:
+            - $ref: '#/components/schemas/MRData'
+            - properties:
+                RaceTable:
+                  properties:
+                    Races:
+                      items:
+                        $ref: '#/components/schemas/Race'
+                      type: array
+                    round:
+                      example: "1"
+                      type: string
+                    season:
+                      example: "2020"
+                      type: string
+                  type: object
+              type: object
+      type: object
+    ResultRaceList:
+      properties:
+        MRData:
+          allOf:
+            - $ref: '#/components/schemas/MRData'
+            - properties:
+                RaceTable:
+                  properties:
+                    Races:
+                      items:
+                        $ref: '#/components/schemas/Race'
+                      type: array
+                    season:
+                      example: "2020"
+                      type: string
+                  type: object
+              type: object
+      type: object
+    ResultSeasonList:
+      properties:
+        MRData:
+          allOf:
+            - $ref: '#/components/schemas/MRData'
+            - properties:
+                SeasonTable:
+                  properties:
+                    Seasons:
+                      items:
+                        $ref: '#/components/schemas/Seasons'
+                      type: array
+              type: object
+      type: object
+    Season:
+      properties:
+        season:
+          example: "2003"
+          type: string
+        url:
+          example: http://en.wikipedia.org/wiki/F1_2003
+          type: string
+      type: object
+    Seasons:
+      items:
+        $ref: '#/components/schemas/Season'
+      type: array
+paths:
+  /drivers:
+    get:
+      operationId: listDrivers
+      parameters:
+        - description: How many items to return at one time (max 100)
+          in: query
+          name: limit
+          required: false
+          schema:
+            format: int32
+            type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultDriverList'
+          description: A paged array of drivers
+          headers:
+            x-next:
+              description: A link to the next page of responses
+              schema:
+                type: string
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: List all drivers
+      tags:
+        - drivers
+    post:
+      operationId: createDrivers
+      responses:
+        "201":
+          description: Null response
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Create a driver
+      tags:
+        - drivers
+  /drivers/{driverId}:
+    get:
+      operationId: showDriverById
+      parameters:
+        - description: The id of the driver to retrieve
+          in: path
+          name: driverId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultDriver'
+          description: Expected response to a valid request
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Info for a specific driver
+      tags:
+        - drivers
+  /drivers/{driverId}/seasons:
+    get:
+      operationId: listDriverSeasons
+      parameters:
+        - description: The id of the driver to retrieve
+          in: path
+          name: driverId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultDriverSeasonList'
+          description: Expected response to a valid request
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: A paged array of seasons where driver raced
+      tags:
+        - drivers
+  /seasons:
+    get:
+      operationId: listSeasons
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultSeasonList'
+          description: Expected response to a valid request
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: A paged array of seasons
+      tags:
+        - seasons
+  /seasons/{seasonYear}:
+    get:
+      operationId: listRaces
+      parameters:
+        - description: The year of the season to retrieve
+          in: path
+          name: seasonYear
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultRaceList'
+          description: Expected response to a valid request
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: A paged array of races in a season
+      tags:
+        - seasons
+  /current/{raceNumber}:
+    get:
+      operationId: getRace
+      parameters:
+        - description: The race in the current season to retrieve
+          in: path
+          name: raceNumber
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultRace'
+          description: Expected response to a valid request
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Get details of a specific race in season/race number
+      tags:
+        - seasons
+servers:
+  - url: http://ergast.com/api/f1
