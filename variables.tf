@@ -18,12 +18,6 @@ variable "key_data" {
   type = map(string)
 }
 
-variable "ami" {
-  description = "The (Ubuntu focal) AMI used for your AWS instances"
-  default     = "ami-053ac55bdcfe96e85"
-  type        = string
-}
-
 variable "r53_zone" {
   description = "R53 hosted zone ID"
   type        = string
@@ -78,12 +72,12 @@ variable "backend_api_certbot" {
   type        = bool
 }
 
+# The (Ubuntu focal) AMI used for your AWS instances
 data "aws_ami" "distro" {
   most_recent = true
 
   filter {
     name   = "name"
-    #values = ["ubuntu/images/hvm-ssd/ubuntu-bionic-18.04*"]
     values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04*"]
   }
 
@@ -97,5 +91,5 @@ data "aws_ami" "distro" {
   }
 
   # ubuntu owner
-  owners = [ "099720109477" ]
+  owners = ["099720109477"]
 }
