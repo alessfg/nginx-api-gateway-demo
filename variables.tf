@@ -77,3 +77,25 @@ variable "backend_api_certbot" {
   default     = false
   type        = bool
 }
+
+data "aws_ami" "distro" {
+  most_recent = true
+
+  filter {
+    name   = "name"
+    #values = ["ubuntu/images/hvm-ssd/ubuntu-bionic-18.04*"]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
+  }
+
+  # ubuntu owner
+  owners = [ "099720109477" ]
+}

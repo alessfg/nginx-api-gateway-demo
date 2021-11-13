@@ -3,7 +3,8 @@
 # Installs NGINX Plus by default
 resource "aws_instance" "nginx_api_gateway" {
   # count         = var.nginx_api_gateway_count
-  ami           = var.ami
+  #ami           = var.ami
+  ami           = data.aws_ami.distro.id
   instance_type = var.nginx_api_gateway_machine_type
   key_name      = var.key_data["name"]
   vpc_security_group_ids = [

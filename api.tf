@@ -1,7 +1,8 @@
 # Mock NGINX Plus Sports API containing mock Baseball, Golf, and Tennis data
 # Also launches an Ergast F1 API container
 resource "aws_instance" "backend_api" {
-  ami           = var.ami
+  #ami           = var.ami
+  ami           = data.aws_ami.distro.id
   instance_type = var.backend_api_machine_type
   key_name      = var.key_data["name"]
   vpc_security_group_ids = [
