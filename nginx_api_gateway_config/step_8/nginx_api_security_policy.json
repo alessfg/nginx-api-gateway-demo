@@ -3,7 +3,7 @@
     "name": "app_protect_api_security_policy",
     "description": "NGINX App Protect API Security Policy",
     "template": {
-      "name": "API_POLICY_NGINX"
+      "name": "POLICY_TEMPLATE_NGINX_BASE"
     },
     "open-api-files": [
       {

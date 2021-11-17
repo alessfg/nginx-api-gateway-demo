@@ -51,7 +51,7 @@ variable "nginx_api_gateway_certbot" {
 
 variable "upload_nginx_api_gateway_config_files" {
   description = "Upload NGINX API gateway sample files"
-  default     = false
+  default     = true
   type        = bool
 }
 
@@ -80,7 +80,6 @@ data "aws_ami" "distro" {
     name   = "name"
     values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04*"]
   }
-
   filter {
     name   = "virtualization-type"
     values = ["hvm"]

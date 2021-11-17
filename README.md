@@ -4,6 +4,8 @@
 
 This demo uses Terraform to automate the setup of an NGINX Plus (and NGINX App Protect WAF) API gateway pseudo-production environment that includes a mock API backend database.
 
+A PDF containing accompanying slides for this demo can also be found under the name of `Deploy and Secure Your API Gateway with NGINX.pdf`.
+
 ## Requirements
 
 ### Terraform
@@ -39,16 +41,182 @@ And finally, once you are done playing with NGINX Controller, you can destroy th
 
 ## Demo Overview
 
-You will find a series of NGINX configuration files in the `api_gateway_files` folder. The folder is divided into individual steps, meant to be copied into their respective directory in order. By default, the folder is uploaded to your NGINX API gateway instance. To then copy each step's configuration files, run `sudo cp -r api_gateway_files/step_<number>/* /etc/nginx`.
+You will find a series of NGINX configuration files in the `nginx_api_gateway_config` folder. The folder is divided into individual steps, meant to be copied into their respective directory in order. By default, the folder is uploaded to your NGINX API gateway instance.
 
-* Step 1 -- Defines the entry point of the NGINX API gateway
-* Step 2 -- Defines default JSON error codes
-* Step 3 -- Defines the API endpoints
-* Step 4 -- Enables rate limiting
-* Step 5 -- Sets up API Key authentication
-* Step 6 -- Sets up JWT authentication
-* Step 7 -- Sets up JSON body validation (using NJS)
-* Step 8 -- Sets up NGINX App Protect WAF protection using an open API spec file.
+A deployment script to help you copy the configuration files, [`deploy.sh`](nginx_api_gateway_config/deploy.sh), is also provided. To run the script, use the step number as a parameter, e.g. `./deploy.sh 1` for step 1.
+
+### Step 1 -> Define the entry point of the NGINX API gateway
+
+To test:
+
+`curl -s http://localhost:8080`
+
+Expected response:
+
+```html
+<html>
+<head><title>400 Bad Request</title></head>
+<body>
+<center><h1>400 Bad Request</h1></center>
+<hr><center>nginx/1.19.5</center>
+</body>
+</html>
+```
+
+### Step 2 -> Define default JSON error codes
+
+To test:
+
+`curl -s http://localhost:8080`
+
+Expected response:
+
+```json
+{"status":400,"message":"Bad request"}
+```
+
+### Step 3 -> Define the API endpoints and upstream/backend servers
+
+To test:
+
+`curl -s http://localhost:8080/api/f1/drivers/hamilton | jq`
+
+Expected response:
+
+```json
+{"MRData": {
+    "xmlns": "http://ergast.com/mrd/1.4",
+    "series": "f1",
+    "url": "http://ergast.com/api/f1/drivers/hamilton",
+    "limit": "30",
+    "offset": "0",
+    "total": "1",
+    "DriverTable": {
+      "driverId": "hamilton",
+      "Drivers": [{
+          "driverId": "hamilton",
+          "permanentNumber": "44",
+          "code": "HAM",
+          "url": "http://en.wikipedia.org/wiki/Lewis_Hamilton",
+          "givenName": "Lewis",
+          "familyName": "Hamilton",
+          "dateOfBirth": "1985-01-07",
+          "nationality": "British"
+      }]
+    }
+}}
+```
+
+### Step 4 -> Enable rate limiting
+
+To test (run multiple times in quick succession):
+
+`curl -s http://localhost:8080/api/f1/drivers/hamilton`
+
+Expected response:
+
+```json
+{"status":429,"message":"API rate limit exceeded"}
+```
+
+### Step 5 -> Set up API Key authentication
+
+To test (unauthorized requests):
+
+`curl -s http://localhost:8080/api/f1/drivers/hamilton`
+
+Expected response:
+
+```json
+{"status":401,"message":"Unauthorized"}
+```
+
+To test (authorized requests):
+
+`curl -sH "apikey: 7B5zIqmRGXmrJTFmKa99vcit" http://localhost:8080/api/f1/drivers/hamilton`
+
+Expected response:
+
+```json
+{"MRData":{"xmlns":"http://ergast.com/mrd/1.4","series":"f1","url":"http://ergast.com/api/f1/drivers/hamilton"...
+```
+
+### Step 6 -> Set up JWT authentication
+
+To test (unauthorized requests):
+
+`curl -s http://localhost:8080/api/f1/drivers/hamilton`
+
+Expected response:
+
+```json
+{"status":401,"message":"Unauthorized"}
+```
+
+To test (authorize request):
+
+`curl -sH "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZX0.kFplw9Kkg-6DLFGfVZAPIuWgGPMY9nnMZMQ2iIRN8_s" -X DELETE http://localhost:8080/api/f1/drivers/hamilton`
+
+Expected response:
+
+```json
+{"MRData":{"xmlns":"http:\/\/ergast.com\/mrd\/1.4","series":"f1","url":"http://ergast.com/api/f1/drivers/hamilton"...
+```
+
+To test (missing JWT claims):
+
+`curl -sH "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6ZmFsc2V9.i7o5c8MEGZWD223IWFIs-Qn6f8FBe_DjvZWn-xBzcvI" -X DELETE http://localhost:8080/api/f1/drivers/hamilton`
+
+Expected response:
+
+```json
+{"status":405,"message":"Method not allowed"}
+```
+
+### Step 7 -> Set up JSON body validation (using NJS)
+
+To test (incorrect JSON):
+
+`curl -sH "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZX0.kFplw9Kkg-6DLFGfVZAPIuWgGPMY9nnMZMQ2iIRN8_s" -i -X POST -d 'garbage123' http://localhost:8080/api/f1/seasons`
+
+Expected response:
+
+```text
+HTTP/1.1 415 Unsupported Media Type
+```
+
+To test (correct JSON):
+
+`curl -sH "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZX0.kFplw9Kkg-6DLFGfVZAPIuWgGPMY9nnMZMQ2iIRN8_s" -i -X POST -d '{"season":"2020"}' http://localhost:8080/api/f1/seasons`
+
+Expected response:
+
+```text
+HTTP/1.1 200 OK
+```
+
+### Step 8 -> Set up NGINX App Protect WAF protection using an OpenAPI spec file
+
+To test:
+
+`curl -sH "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZX0.kFplw9Kkg-6DLFGfVZAPIuWgGPMY9nnMZMQ2iIRN8_s" -i -X POST -d 'garbage123' http://localhost:8080/api/f1/seasons`
+
+Expected response:
+
+```json
+HTTP/1.1 403 Forbidden
+{"supportID": "4839869788531770938"}
+```
+
+To check logs:
+
+`sudo cat /var/log/app_protect/security.log`
+
+Expected response:
+
+```text
+attack_type="HTTP Parser Attack”... support_id="4839869788531771448”...
+```
 
 ## Author Information
 

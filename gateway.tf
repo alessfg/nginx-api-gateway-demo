@@ -1,6 +1,5 @@
-# NGINX API Gateway instance(s)
-# The number of deployed instances can be tweaked using the count variable
-# Installs NGINX Plus by default
+# NGINX API Gateway instance
+# Installs NGINX App Protect by default
 resource "aws_instance" "nginx_api_gateway" {
   ami           = data.aws_ami.distro.id
   instance_type = var.nginx_api_gateway_machine_type
@@ -75,7 +74,7 @@ resource "null_resource" "upload_nginx_api_gateway_config_files" {
     ]
   }
   provisioner "file" {
-    source      = "api_gateway_files"
+    source      = "nginx_api_gateway_config"
     destination = "/home/ubuntu"
   }
   connection {
