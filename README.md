@@ -26,8 +26,8 @@ You will need to create R53 hosted zone beforehand. Make sure you own the domain
 
 To use the provided Terraform scripts, you need to:
 
-1. Export your AWS credentials as environment variables (or alternatively, tweak the AWS provider in [`provider.tf`](provider.tf)).
-2. Set up default values for variables missing a value in [`variables.tf`](variables.tf) (you can find example values commented out in the file). Alternatively, you can input those variables at runtime (beware of dictionary values if you do the latter).
+1. Export your AWS credentials as environment variables (or alternatively, tweak the AWS provider in [`terraform/provider.tf`](terraform/provider.tf)).
+2. Set up default values for variables missing a value in [`terraform/variables.tf`](terraform/variables.tf) (you can find example values commented out in the file). Alternatively, you can input those variables at runtime (beware of dictionary values if you do the latter).
 
 Once you have configured your Terraform environment, you can either:
 
@@ -41,7 +41,9 @@ And finally, once you are done playing with the demo, you can destroy the AWS in
 
 ## Demo Overview
 
-You will find a series of NGINX configuration files in the `nginx_api_gateway_config` folder. The folder is divided into individual steps, meant to be copied into their respective directory in order. By default, the folder is uploaded to your NGINX API gateway instance.
+You will find a series of NGINX configuration files in the [`nginx_api_gateway_config`](nginx_api_gateway_config/) folder. The folder is divided into individual steps, meant to be copied into their respective directory in order. By default, the folder is uploaded to your NGINX API gateway instance.
+
+Do note that you will have to replace the `<backend-api-fqdn>` placeholder value found in the API backends NGINX configuration file in Step 3 with the corresponding value you used when deploying the Terraform environment (see [`nginx_api_gateway_config/step_3/api_backends.conf`](nginx_api_gateway_config/step_3/api_backends.conf) for more details).
 
 A deployment script to help you copy the configuration files, [`deploy.sh`](nginx_api_gateway_config/deploy.sh), is also provided. To run the script, use the step number as a parameter, e.g. `./deploy.sh 1` for step 1. You might need to make the deployment script executable by running `sudo chmod +x deploy.sh`.
 
@@ -164,12 +166,17 @@ Expected response (unauthorized requests):
 
 To test (authorized requests):
 
-`curl -sH "apikey: 7B5zIqmRGXmrJTFmKa99vcit" http://localhost:8080/api/f1/drivers/hamilton`
+`curl -sH "apikey: 7B5zIqmRGXmrJTFmKa99vcit" http://localhost:8080/api/f1/drivers/hamilton | jq`
 
 Expected response (authorized requests):
 
 ```json
-{"MRData":{"xmlns":"http://ergast.com/mrd/1.4","series":"f1","url":"http://ergast.com/api/f1/drivers/hamilton"...
+{"MRData": {
+    "xmlns": "http://ergast.com/mrd/1.4",
+    "series": "f1",
+    "url": "http://ergast.com/api/f1/drivers/hamilton",
+    ...
+}}
 ```
 
 ### Step 6 -> Set up JWT authentication
@@ -190,12 +197,17 @@ Expected response (unauthorized requests):
 
 To test (authorized request):
 
-`curl -sH "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZX0.kFplw9Kkg-6DLFGfVZAPIuWgGPMY9nnMZMQ2iIRN8_s" http://localhost:8080/api/f1/drivers/hamilton`
+`curl -sH "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZX0.kFplw9Kkg-6DLFGfVZAPIuWgGPMY9nnMZMQ2iIRN8_s" http://localhost:8080/api/f1/drivers/hamilton | jq`
 
 Expected response (authorized request):
 
 ```json
-{"MRData":{"xmlns":"http:\/\/ergast.com\/mrd\/1.4","series":"f1","url":"http://ergast.com/api/f1/drivers/hamilton"...
+{"MRData": {
+    "xmlns": "http://ergast.com/mrd/1.4",
+    "series": "f1",
+    "url": "http://ergast.com/api/f1/drivers/hamilton",
+    ...
+}}
 ```
 
 To test (missing JWT claims):

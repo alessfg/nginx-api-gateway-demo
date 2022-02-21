@@ -1,3 +1,4 @@
-terraform destroy -auto-approve \
-&& rm terraform.tfstate terraform.tfstate.backup \
+cd terraform \
+&& terraform destroy -auto-approve \
+&& rm -f terraform.tfstate terraform.tfstate.backup \
 && rm -rf .terraform

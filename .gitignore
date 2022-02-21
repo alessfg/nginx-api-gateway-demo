@@ -5,14 +5,14 @@
 *~
 \#*
 
-# OS Specific #
+# OS specific #
 ###############
 Thumbs.db
 .DS_Store
 .vscode
 
-# Terraform Specific #
+# Terraform specific #
 ######################
-*tfvars
-*tfstate*
 .terraform
+*tfstate*
+*.tfvars
