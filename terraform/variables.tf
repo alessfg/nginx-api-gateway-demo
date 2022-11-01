@@ -6,7 +6,7 @@ variable "region" {
 
 variable "owner" {
   description = "Owner of resources"
-  default     = var.key_data["name"]
+  default     = "NGINX APIg demo runner"
   type        = string
 }
 
